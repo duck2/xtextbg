@@ -1,47 +1,83 @@
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <X11/Xlib.h>
-#include <X11/Xatom.h>
 #include <X11/Xft/Xft.h>
 
 #include "config.h"
 
-int main()
+void die(char * f, ...)
 {
-	char buf[MAX+1] = "Lorem Ipsum";
-	int x, s, w, h;
+	va_list ap;
+	va_start(ap, f);
+	vfprintf(stderr, f, ap);
+	va_end(ap);
+	exit(1);
+}
+
+void usage()
+{
+	die("usage: drwr [x] [y]\n");
+}
+
+int estrtol(char * f)
+{
+	int q;
+	char * e;
+	q = strtol(f, &e, 10);
+	if (*e) usage();
+	return q;
+}
+
+int main(int argc, char * argv[])
+{
+	char buf[MAX+1], * line;
+	int len, s, x, y, w, h;
 	Display * d;
 	Window r;
+	XWindowAttributes ra;
 	XftFont * f;
 	XftDraw * drw;
-	XftColor xftc;
+	XftColor xftc, xftbg;
 	Pixmap pix;
+	XGlyphInfo ext;
 
-	if (!(d = XOpenDisplay(NULL))) fprintf(stderr, "drwr: cannot open display.\n");
+	if(argc != 3) usage();
+	x = estrtol(argv[1]);
+	y = estrtol(argv[2]);
+
+	if(!(d = XOpenDisplay(NULL))) die("cannot open display\n");
 	s = DefaultScreen(d);
 	r = RootWindow(d, s);
-	if (!(f = XftFontOpenName(d, s, font))) fprintf(stderr, "drwr: could not open font.\n");
+	if(!(f = XftFontOpenName(d, s, font))) die("cannot open font\n");
 
-	/*
-	x = read(0, buf, MAX);
-	buf[x] = '\0';
-	printf("drwr: read %s\n", buf);
-	*/
-	x = 12;
+	len = read(0, buf, MAX);
+	buf[len] = '\0';
 
-	w = 1600;
-	h = 900;
-	if(!(pix = XCreatePixmap(d, r, w, h, DefaultDepth(d, s)))) fprintf(stderr, "drwr: could not create pixmap.\n");
+	XftTextExtentsUtf8(d, f, (XftChar8 *)buf, len, &ext);
+	XGetWindowAttributes(d, r, &ra);
+	w = ra.width;
+	h = ra.height;
+	if(!(pix = XCreatePixmap(d, r, w, h, DefaultDepth(d, s)))) die("cannot make pixmap\n");
 
-	drw = XftDrawCreateAlpha(d, pix, DefaultDepth(d, s));
+	drw = XftDrawCreate(d, pix, DefaultVisual(d, s), DefaultColormap(d, s));
 	XftColorAllocValue(d, DefaultVisual(d, s), DefaultColormap(d, s), &color, &xftc);
-	XftDrawStringUtf8(drw, &xftc, f, 100, 100, (XftChar8 *)buf, x);
-	XftDrawRect(drw, &xftc, 10, 10, 50, 50);
+	XftColorAllocValue(d, DefaultVisual(d, s), DefaultColormap(d, s), &bgcolor, &xftbg);
+	XftDrawRect(drw, &xftbg, 0, 0, w, h);
+
+	line = strtok(buf, "\n");
+	if(!line) line = buf;
+	do {
+		XftDrawStringUtf8(drw, &xftc, f, x, y, (XftChar8 *)line, strlen(line));
+		y += ext.height * line_spacing;
+	} while((line = strtok(NULL, "\n")));
 
 	XSetWindowBackgroundPixmap(d, r, pix);
+	XClearWindow(d, r);
 	XFlush(d);
 
+	XftDrawDestroy(drw);
 	XCloseDisplay(d);
 
 	return 0;
