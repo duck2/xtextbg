@@ -18,7 +18,7 @@ void die(char * f, ...)
 
 void usage()
 {
-	die("usage: drwr [x] [y]\n");
+	die("usage: xtextbg [x] [y]\n");
 }
 
 int estrtol(char * f)

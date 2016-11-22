@@ -10,22 +10,22 @@ CC=cc
 CFLAGS=-Wall -Werror -pedantic -I$(X11INC) -I$(FT2INC) -L$(X11LIB)
 LDFLAGS=-lX11 -lXft
 
-all: drwr
+all: xtextbg
 
-drwr: drwr.c config.h
-	$(CC) -o drwr drwr.c $(CFLAGS) $(LDFLAGS)
+xtextbg: xtextbg.c config.h
+	$(CC) -o xtextbg xtextbg.c $(CFLAGS) $(LDFLAGS)
 
 install: all
 	@echo installing to ${PREFIX}/bin
 	mkdir -p ${PREFIX}/bin
-	cp -f drwr ${PREFIX}/bin
-	chmod 755 ${PREFIX}/bin/drwr
+	cp -f xtextbg ${PREFIX}/bin
+	chmod 755 ${PREFIX}/bin/xtextbg
 
 uninstall:
 	@echo removing from ${PREFIX}/bin
-	rm -f ${PREFIX}/bin/drwr
+	rm -f ${PREFIX}/bin/xtextbg
 
 clean:
-	rm -f drwr
+	rm -f xtextbg
 
 .PHONY: all clean install uninstall
