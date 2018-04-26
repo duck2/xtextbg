@@ -70,7 +70,7 @@ int main(int argc, char * argv[])
 	if(!line) line = buf;
 	do {
 		XftDrawStringUtf8(drw, &xftc, f, x, y, (XftChar8 *)line, strlen(line));
-		y += ext.height * line_spacing;
+		y += f->height * line_spacing;
 	} while((line = strtok(NULL, "\n")));
 
 	XSetWindowBackgroundPixmap(d, r, pix);
